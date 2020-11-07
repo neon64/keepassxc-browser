@@ -10,6 +10,7 @@ const acceptedOTPFields = [
     'auth',
     'challenge',
     'code',
+    'idvpin',
     'mfa',
     'otp',
     'token',

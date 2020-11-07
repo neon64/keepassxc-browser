@@ -3,6 +3,7 @@
 const Tests = {
     GLOBAL: '#global-results',
     KEEPASSXCBROWSER: '#keepassxcbrowser-results',
+    TOTP: '#totpfield-results'
 };
 
 function createResult(card, res, text) {
@@ -64,6 +65,22 @@ async function assertInputFields(localFile, expectedFieldCount, actionElementId)
     });
 }
 
+async function assertTOTPField(classStr, properties, testName, expectedResult) {
+    const input = kpxcUI.createElement('input', classStr, properties);
+    document.body.appendChild(input);
+
+    const isAccepted = kpxcTOTPIcons.isAcceptedTOTPField(input);
+    const isValid = kpxcTOTPIcons.isValid(input);
+
+    document.body.removeChild(input);
+    assert(isAccepted && isValid, expectedResult, Tests.TOTP, testName);
+}
+
+
+/*
+ * Actual tests
+ * ===================
+ */
 
 // Tests for global.js
 async function testGlobal() {
@@ -102,22 +119,72 @@ async function testKeePassXCBrowser() {
         [ 'html/basic2.html', 1 ], // Only username field
         [ 'html/basic3.html', 1 ], // Only password field
         [ 'html/basic4.html', 3 ], // Username/passwd/TOTP fields
-        [ 'html/div1.html', 2, '#toggle' ], // Fields are behind a button that must be pressed. TODO.
-        [ 'html/div2.html', 2, '#toggle' ], // Fields are behind a button that must be pressed behind a JavaScript. Script does not work.
-        [ 'html/div3.html', 2, '#toggle' ], // Fields are behind a button that must be pressed. TODO.
-        [ 'html/div4.html', 2, '#toggle' ], // Fields are behind a button that must be pressed. TODO.
-        [ 'html/hidden_fields1.html', 0 ],
-        [ 'html/hidden_fields2.html', 1 ],
+        [ 'html/div1.html', 2, '#toggle' ], // Fields are behind a button that must be pressed
+        [ 'html/div2.html', 2, '#toggle' ], // Fields are behind a button that must be pressed behind a JavaScript
+        [ 'html/div3.html', 2, '#toggle' ], // Fields are behind a button that must be pressed
+        [ 'html/div4.html', 2, '#toggle' ], // Fields are behind a button that must be pressed
+        [ 'html/hidden_fields1.html', 0 ], // Two hidden fields
+        [ 'html/hidden_fields2.html', 1 ], // Two hidden fields with one visible
     ];
 
     for (const file of localFiles) {
         await assertInputFields(file[0], file[1], file[2]);
     }
+
+    document.getElementById('testFile').hidden = true;
 }
 
+// Tests for totp-field.js
+async function testTotpFields() {
+    const totpFields = [
+        [ '', { id: 'otp_field', name: 'otp', type: 'text', maxLength: '8' }, 'Generic 2FA field', true ],
+        [ '', { id: '2fa', type: 'text', maxLength: '6' }, 'Generic 2FA field', true ],
+        [ '', { id: '2fa', type: 'text', maxLength: '4' }, 'Ignore if field maxLength too small', false ],
+        [ '', { id: '2fa', type: 'text', maxLength: '12' }, 'Ignore if field maxLength too long', false ],
+        [ '', { id: 'username', type: 'text', }, 'Ignore a generic input field', false ],
+        [ '', { type: 'password', }, 'Ignore a password input field', false ],
+        [ // Protonmail
+            'TwoFA-input ng-empty ng-invalid ng-invalid-required ng-valid-minlength ng-valid-maxlength ng-touched',
+            { autocapitalize: 'off', autocorrect: 'off', id: 'twoFactorCode', type: 'text', placeholder: 'Two-factor passcode', name: 'twoFactorCode' },
+            'Protonmail 2FA',
+            true
+        ],
+        [ // Nextcloud
+            '',
+            { minlength: '6', maxLength: '10', name: 'challenge', placeholder: 'Authentication code', type: 'tel', },
+            'Nextcloud 2FA',
+            true
+        ],
+        [ // Amazon.com
+            'a-input-text a-span12 auth-autofocus auth-required-field',
+            { autocomplete: 'off', id: 'auth-mfa-otpcode', maxLength: '20', name: 'otpCode', type: 'tel', },
+            'Amazon.com 2FA',
+            true
+        ],
+        [ // GMail
+            'whsOnd zHQkBf',
+            { autocomplete: 'off', id: 'idvPin', tabindex: '0', name: 'idvPin', pattern: '[0-9 ]*', type: 'tel', spellcheck: 'false' },
+            'GMail 2FA',
+            true
+        ],
+        [ // Live.com
+            'orm-control',
+            { autocomplete: 'off', id: 'idTxtBx_SAOTCC_OTC', maxLength: '8', tabindex: '0', name: 'otc', placeholder: 'Code', type: 'tel' },
+            'Live.com 2FA',
+            true
+        ],
+    ];
+
+    for (const field of totpFields) {
+        assertTOTPField(field[0], field[1], field[2], field[3]);
+    }
+}
+
+// Run tests
 (async () => {
     await Promise.all([
         await testGlobal(),
         await testKeePassXCBrowser(),
+        await testTotpFields(),
     ]);
 })();
