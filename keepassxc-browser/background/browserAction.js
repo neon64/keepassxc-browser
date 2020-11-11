@@ -9,10 +9,7 @@ browserAction.show = function(tab, popupData) {
 
     page.popupData = popupData;
 
-    browser.browserAction.setIcon({
-        tabId: tab.id,
-        path: browserAction.generateIconName(popupData.iconType)
-    });
+    browserAction.setBadge(popupData.iconType)
 
     if (popupData.popup) {
         browser.browserAction.setPopup({
@@ -56,19 +53,29 @@ browserAction.updateIcon = async function(tab, iconType) {
         tab = tabs[0];
     }
 
-    browser.browserAction.setIcon({
-        tabId: tab.id,
-        path: browserAction.generateIconName(iconType)
+    browserAction.setBadge(popupData.iconType)
+};
+
+browserAction.setBadge = function(iconType) {
+    let map = { 'cross': { text: '!', backgroundColor: '#FFCC00' }, 'dark': { text: '' }, 'locked': { text: '🔒︎', backgroundColor: '#FC7A57' }, 'normal': {text: ''}, 'questionmark': {text: '?', backgroundColor: '#9DD9D2' } };
+    let badge;
+    if(iconType in map) {
+        badge = map[iconType];
+    } else {
+        badge = { text: '', backgroundColor: '' };
+    }
+
+    if (keepass.keePassXCUpdateAvailable()) {
+        badge.text += '+';
+    }
+
+    browser.browserAction.setBadgeText({
+        text: badge.text
     });
-};
-
-browserAction.generateIconName = function(iconType) {
-    let name = 'icon_';
-    name += (keepass.keePassXCUpdateAvailable()) ? 'new_' : '';
-    name += (!iconType || iconType === 'normal') ? 'normal' : iconType;
-
-    return `/icons/toolbar/${name}.png`;
-};
+    browser.browserAction.setBadgeBackgroundColor({
+        color: badge.backgroundColor
+    });
+}
 
 browserAction.ignoreSite = async function(url) {
     await browser.windows.getCurrent();

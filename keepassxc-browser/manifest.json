@@ -22,6 +22,16 @@
             "38": "icons/keepassxc_38x38.png",
             "64": "icons/keepassxc_64x64.png"
         },
+        "theme_icons": [{
+            "dark": "icons/keypassxc-thin-dark.svg",
+            "light": "icons/keypassxc-thin.svg",
+            "size": 16
+        },
+        {
+            "dark": "icons/keypassxc-thin-dark.svg",
+            "light": "icons/keypassxc-thin.svg",
+            "size": 32
+        }],
         "default_title": "KeePassXC-Browser",
         "default_popup": "popups/popup.html"
     },
@@ -109,7 +119,6 @@
     },
     "web_accessible_resources": [
         "icons/disconnected.svg",
-        "icons/keepassxc.svg",
         "icons/key.svg",
         "icons/locked.svg",
         "icons/otp.svg",

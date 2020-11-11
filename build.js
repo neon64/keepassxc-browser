@@ -28,6 +28,7 @@ function adjustManifest(manifest) {
         delete data['version_name'];
     } else if (manifest.includes('chromium')) {
         delete data['applications'];
+        delete data['browser_action']['theme_icons'];
     }
 
     fs.writeFileSync(manifest, JSON.stringify(data, null, 4));
